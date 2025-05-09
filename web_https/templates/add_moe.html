@@ -1,0 +1,35 @@
+{% include 'includes/header.html' %}
+<title>Add MOEs</title>
+
+<header>
+    <h1>Add a Mark of Excellence</h1>
+</header>
+
+<section class="py-5">
+    <div class="container px-4 px-lg-5 mt-5">
+        <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-4 justify-content-center">
+            <form method="post">
+                <label for="tank_name">Tank :</label>
+                <select id="tank_name" name="tank_name">
+                    {% for tank in tanks %}
+                    <option value="{{ tank.name }}">{{ tank.name }}</option>
+                    {% endfor %}
+                </select>
+                <br><br>
+
+                <label for="moe_number">Number of moe :</label>
+                <input type="number" id="moe_number" name="moe_number" min="1" max="3" required>
+                <br><br>
+
+                <label for="date_obtained">Date obtained :</label>
+                <input type="date" id="date_obtained" name="date_obtained" required>
+                <br><br>
+
+                <button type="submit" class="btn btn-primary">Ajouter</button>
+            </form>
+        </div>
+    </div>
+</div>
+</section>
+
+{% include 'includes/footer.html' %}

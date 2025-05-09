@@ -1,0 +1,67 @@
+{% include 'includes/header.html' %}
+<title>Tank edit</title>
+
+<header>
+    <h1>{{ tank.full_name }}</h1>
+</header>
+
+<section class="py-5">
+    <div class="container px-4 px-lg-5 mt-5">
+        <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-4 justify-content-center">
+            <form method="post">
+                <label for="name">Name :</label>
+                <input type="text" id="name" name="name" value="{{ tank.name }}" required>
+                <br><br>
+        
+                <label for="full_name">Full Name :</label>
+                <input type="text" id="full_name" name="full_name" value="{{ tank.full_name }}" required>
+                <br><br>
+        
+                <label for="class">Class :</label>
+                <select id="class" name="class" required>
+                    <option value="Heavy Tank" {% if tank.class == 'Heavy Tank' %}selected{% endif %}>Heavy Tank</option>
+                    <option value="Medium Tank" {% if tank.class == 'Medium Tank' %}selected{% endif %}>Medium Tank</option>
+                    <option value="Tank Destroyer" {% if tank.class == 'Tank Destroyer' %}selected{% endif %}>Tank Destroyer</option>
+                    <option value="Light Tank" {% if tank.class == 'Light Tank' %}selected{% endif %}>Light Tank</option>
+                    <option value="Artillery" {% if tank.class == 'Artillery' %}selected{% endif %}>Artillery</option>
+                </select>
+                <br><br>
+        
+                <label for="tier">Tier :</label>
+                <select id="tier" name="tier" required>  
+                    {% for i in range(1, 11) %}
+                    <option value="{{ i }}" {% if tank.tier == i %}selected{% endif %}>{{ i }}</option>
+                    {% endfor %}
+                </select>
+                <br><br>
+        
+                <label for="type">Type :</label>
+                <select id="type" name="type" required>
+                    <option value="Tech Tree" {% if tank.type == 'Tech Tree' %}selected{% endif %}>Tech Tree</option>
+                    <option value="Collection" {% if tank.type == 'Collection' %}selected{% endif %}>Collection</option>
+                    <option value="Premium" {% if tank.type == 'Premium' %}selected{% endif %}>Premium</option>
+                    <option value="Reward" {% if tank.type == 'Reward' %}selected{% endif %}>Reward</option>
+                </select>
+                <br><br>
+
+                <label for="mastery">Mastery Badge :</label>
+                <select id="mastery" name="mastery" required>
+                    <option value="4" {% if tank.mastery == 4 %}selected{% endif %}>Ace</option>
+                    <option value="3" {% if tank.mastery == 3 %}selected{% endif %}>1st Class</option>
+                    <option value="2" {% if tank.mastery == 2 %}selected{% endif %}>2nd Class</option>
+                    <option value="1" {% if tank.mastery == 1 %}selected{% endif %}>3rd Class</option>
+                    <option value="0" {% if tank.mastery == 0 %}selected{% endif %}>Nothing</option>
+                </select>
+                <br><br>
+
+                <button type="submit" class="btn btn-primary">Save</button>
+
+                <button type="button" class="btn btn-primary" onclick="window.location.href='{{ url_for('show_tank', tank_id=tank.id) }}'">Cancel</button>
+            </form>
+            <br>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% include 'includes/footer.html' %}

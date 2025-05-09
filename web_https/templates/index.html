@@ -1,0 +1,164 @@
+{% include 'includes/header.html' %}
+<title>Home</title>
+
+<header>
+    <h1>List of all Tanks</h1>
+</header>
+
+<div style="display: flex;">
+    <!-- Barre latérale -->
+    <aside style="width: 200px; padding: 10px; border-right: 1px solid #ddd;">
+        <nav>
+            <ul style="list-style-type: none; padding: 0;">
+                <input type="text" id="searchInput" placeholder="Search tanks..." onkeyup="filterTanks()" style="margin-top: 20px; padding: 10px; width: 100%; box-sizing: border-box;">
+                {% for nation in nation_order %}
+                    {% if tanks_by_nation[nation] %}
+                        <li style="margin-bottom: 10px;">
+                            <a href="#{{ nation }}" style="text-decoration: none;">{{ nation }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Contenu principal -->
+    <main style="flex-grow: 1; padding: 10px;">     
+        {% for nation in nation_order %}
+            {% if tanks_by_nation[nation] %}
+            <br>
+            <h2 id="{{ nation }}" class="text-center">{{ nation }}</h2>
+            <br>
+
+            <table class="justify-content-center" border="1" id="tankTable-{{ nation }}">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Class</th>
+                        <th>Tier</th>
+                        <th>Type</th>
+                        <th>Marks of Excellence</th>
+                        <th>Mastery Badge</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tank in tanks_by_nation[nation] %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('show_tank', tank_id=tank.id) }}">{{ tank.name }}</a>
+                        </td>
+                        <td>
+                            {% if tank.class == 'Artillery' %}
+                                <img src="{{ url_for('static', filename='images/Artillery.png') }}" alt="Artillery">
+                            {% elif tank.class == 'Heavy Tank' %}
+                                <img src="{{ url_for('static', filename='images/Heavy_Tank.png') }}" alt="Heavy Tank">
+                            {% elif tank.class == 'Medium Tank' %}
+                                <img src="{{ url_for('static', filename='images/Medium_Tank.png') }}" alt="Medium Tank">
+                            {% elif tank.class == 'Light Tank' %}
+                                <img src="{{ url_for('static', filename='images/Light_Tank.png') }}" alt="Medium Tank">
+                            {% else %}
+                                <img src="{{ url_for('static', filename='images/Tank_Destroyer.png') }}" alt="Tank Destroyer">
+                            {% endif %}   
+                        </td>
+                        <td>{{ tank.tier }}</td>
+                        <td>{{ tank.type }}</td>
+                        <td>
+                            {% if tank.tier > 4 %}
+                                {% if tank.moe > 0 %}
+                                    {% set moe_image_path = 'images/moes/' ~ tank.nation_code|lower ~ '_' ~ tank.moe ~ '_mark.webp' %}
+                                    <img src="{{ url_for('static', filename=moe_image_path) }}" 
+                                    alt="{{ tank.moe }} Mark(s) of Excellence for {{ tank.nation }}" 
+                                    class="moeindex">
+                                {% else %}
+                                    No Marks of Excellence
+                                {% endif %}
+                            {% else %}
+                                Unavailable
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if tank.mastery == 4 %}
+                                <img src="{{ url_for('static', filename='images/4.webp') }}" alt="Ace Mastery Badge" class="masteryindex">
+                            {% elif tank.mastery == 3 %}
+                                <img src="{{ url_for('static', filename='images/3.webp') }}" alt="1st Class Mastery Badge" class="masteryindex">
+                            {% elif tank.mastery == 2 %}
+                                <img src="{{ url_for('static', filename='images/2.webp') }}" alt="2nd Class Mastery Badge" class="masteryindex">
+                            {% elif tank.mastery == 1 %}
+                                <img src="{{ url_for('static', filename='images/1.webp') }}" alt="3rd Class Mastery Badge" class="masteryindex">
+                            {% else %}
+                                <img src="{{ url_for('static', filename='images/0.webp') }}" alt="No Mastery Badge" class="masteryindex">
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+        {% endfor %}
+        <br>
+    </main>
+</div>
+
+<script>
+    function filterTanks() {
+        // Récupère la valeur de recherche et ignore les espaces
+        let input = document.getElementById('searchInput').value.toLowerCase().replace(/\s+/g, '');
+
+        // Fonction de correspondance flexible (recherche approximative)
+        function fuzzyMatch(str, pattern) {
+            // Élimine les espaces et compare les lettres du pattern avec celles du str
+            let strCleaned = str.replace(/\s+/g, '').toLowerCase();
+            let patternIndex = 0;
+            for (let i = 0; i < strCleaned.length; i++) {
+                if (strCleaned[i] === pattern[patternIndex]) {
+                    patternIndex++;
+                }
+                if (patternIndex === pattern.length) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Récupère tous les tableaux de tanks
+        let tables = document.querySelectorAll('table');
+
+        // Parcourt chaque tableau
+        tables.forEach(table => {
+            let rows = table.querySelectorAll('tbody tr');
+            let hasVisibleRow = false; // Suivi des lignes visibles pour chaque tableau
+
+            // Parcourt chaque ligne de chaque tableau
+            rows.forEach(row => {
+                let nameCell = row.getElementsByTagName('td')[0];
+
+                // Vérifie si la ligne correspond à la recherche avec correspondance flexible
+                if (nameCell) {
+                    let txtValue = nameCell.textContent || nameCell.innerText;
+                    if (fuzzyMatch(txtValue, input)) {
+                        row.style.display = ""; // Affiche la ligne
+                        hasVisibleRow = true;  // Il y a au moins une ligne visible
+                    } else {
+                        row.style.display = "none"; // Cache la ligne
+                    }
+                }
+            });
+
+            // Si aucune ligne n'est visible, cache le tableau et son titre de nation
+            let nationHeader = table.previousElementSibling; // Le titre de la nation juste avant le tableau
+            if (hasVisibleRow) {
+                table.style.display = ""; // Affiche le tableau
+                if (nationHeader.tagName.toLowerCase() === 'h2') {
+                    nationHeader.style.display = ""; // Affiche le titre de la nation
+                }
+            } else {
+                table.style.display = "none"; // Cache le tableau
+                if (nationHeader.tagName.toLowerCase() === 'h2') {
+                    nationHeader.style.display = "none"; // Cache le titre de la nation
+                }
+            }
+        });
+    }
+</script>
+
+{% include 'includes/footer.html' %}

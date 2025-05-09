@@ -1,0 +1,40 @@
+<style>
+    .error {
+        color: red;
+    }
+</style>
+
+{% include './includes/header.html' %}
+<title>Login</title>
+
+<header>
+    <h1>Login</h1>
+</header>
+
+<section class="py-5">
+    <div class="container px-4 px-lg-5 mt-5">
+        <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-4 justify-content-center">
+                <form method="POST">
+                    <label for="username">User :</label>
+                    <br>
+                    <input type="text" id="username" name="username" required>
+                    <br>
+                    <br>
+                    <label for="password">Password:</label>
+                    <br>
+                    <input type="password" id="password" name="password" required>
+                    <br>
+                    <br>
+                    <button type="submit" class="btn btn-primary">Login</button>
+                    <br>
+                    <br>
+                    {% if error %}
+                        <p class="error">{{ error }}</p>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% include './includes/footer.html' %}

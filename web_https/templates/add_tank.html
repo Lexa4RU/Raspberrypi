@@ -1,0 +1,62 @@
+{% include 'includes/header.html' %}
+<title>Add a tank</title>
+
+<header>
+    <h1>Add a Tank</h1>
+</header>
+
+<section class="py-5">
+    <div class="container px-4 px-lg-5 mt-5">
+        <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-4 justify-content-center"> 
+            <form method="post">
+                <label for="name">Name :</label> <br>
+                <input type="text" id="name" name="name" required>
+                <br><br>
+        
+                <label for="full_name">Full Name :</label>
+                <input type="text" id="full_name" name="full_name" required>
+                <br><br>
+                
+                <label for="nation_code">Nation :</label>
+                <select id="nation_code" name="nation_code">
+                    {% for code, name in nations %}
+                    <option value="{{ code }}">{{ name }}</option>
+                    {% endfor %}
+                </select>
+                <br><br>
+                
+                <label for="class">Class :</label>
+                <select id="class" name="class" required>
+                    <option value="Heavy Tank">Heavy Tank</option>
+                    <option value="Medium Tank">Medium Tank</option>
+                    <option value="Tank Destroyer">Tank Destroyer</option>
+                    <option value="Light Tank">Light Tank</option>
+                    <option value="Artillery">Artillery</option>
+                </select>
+                <br><br>
+        
+                <label for="tier">Tier :</label>
+                <select id="tier" name="tier" required>  
+                    {% for i in range(1, 11) %}
+                    <option value="{{ i }}">{{ i }}</option>
+                    {% endfor %}
+                </select>
+                <br><br>
+        
+                <label for="type">Type :</label>
+                <select id="type" name="type" required>
+                    <option value="Tech Tree">Tech Tree</option>
+                    <option value="Collection">Collection</option>
+                    <option value="Premium">Premium</option>
+                    <option value="Reward">Reward</option>
+                </select>
+                <br><br>
+
+                <button type="submit" class="btn btn-primary">Ajouter</button>
+            </form>
+        </div>
+    </div>
+</div>
+</section>
+
+{% include 'includes/footer.html' %}
