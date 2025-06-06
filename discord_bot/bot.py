@@ -2,6 +2,7 @@ import discord
 import mysql.connector as MC
 import time
 import os
+import asyncio
 from discord.ext import commands, tasks
 from datetime import datetime
 from dotenv import load_dotenv
@@ -18,23 +19,11 @@ intents.message_content = True
 
 bot = commands.Bot(command_prefix=PREFIX, intents=intents)
 
-# Structure en memoire pour stocker les messages programmes
-scheduled_messages = []  # Liste contenant des dicts : {"id", "send_time", "channel_id", "message"}
+scheduled_messages = []
 
-# Role requis pour les commandes specifiques
-ROLE_REQUIRED = "Calendrier"
-
-# Verification des permissions
 async def is_admin(ctx):
     return ctx.author.guild_permissions.administrator
 
-async def has_calendar_role_or_admin(ctx):
-    if await is_admin(ctx):
-        return True
-    role = discord.utils.get(ctx.author.roles, name=ROLE_REQUIRED)
-    return role is not None
-
-# Connexion a la base de donnees
 def connect_db():
     try:
         conn = MC.connect(
@@ -48,7 +37,6 @@ def connect_db():
     except MC.Error:
         return None
 
-# Charger les messages depuis la DB au demarrage
 def load_messages_from_db():
     """
     Charge les messages depuis la base de données et synchronise strictement les messages en memoire avec les messages de la base.
@@ -61,8 +49,7 @@ def load_messages_from_db():
         scheduled_messages = cursor.fetchall()
         cursor.close()
         db.close()
-
-# Sauvegarder un message dans la DB
+        
 def save_message_to_db(send_time, channel_id, message):
     """
     Sauvegarde les messages dans la base de données
@@ -81,7 +68,6 @@ def save_message_to_db(send_time, channel_id, message):
         return last_id
     return None
 
-# Supprimer un message de la DB
 def delete_message_from_db(message_id):
     """
     Supprime le message spécifié de la base de données
@@ -97,7 +83,6 @@ def delete_message_from_db(message_id):
         return row_count > 0
     return False
 
-# Gestion des erreurs globales
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
@@ -126,18 +111,14 @@ async def timestamp(ctx, date: str, time_str: str, format_code: str = "R"):
     valid_formats = ["R", "t", "T", "d", "D", "f", "F"]
 
     try:
-        # Vérification du format de la date et de l'heure
         dt = datetime.strptime(f"{date} {time_str}", "%d/%m/%y %H:%M:%S")
-        
-        # Vérification du format donné par l'utilisateur
+
         if format_code not in valid_formats:
             await ctx.send(f"Format invalide. Utilisez l'un des formats suivants : {', '.join(valid_formats)}.")
             return
 
-        # Conversion en timestamp
         timestamp = int(time.mktime(dt.timetuple()))
 
-        # Construction de l'affichage pour Discord
         await ctx.send(f"```<t:{timestamp}:{format_code}>```")
     
     except ValueError:
@@ -154,28 +135,26 @@ async def drop(ctx, date1: str, time1: str, date2:str, time2:str, *args):
     --> notifs-drops : @Drops --> <t:1732561200:R> Bonjour tout le monde
     """
     try:
-        channel_id = 1334177160319209594
-        # Conversion de la date et de l'heure
+        channel_id = int(os.getenv('drop_channel'))
+        drop_role = os.getenv("drop_role")
         send_time = datetime.strptime(f"{date1} {time1}", "%d/%m/%y %H:%M")
         dt = datetime.strptime(f"{date2} {time2}", "%d/%m/%y %H:%M")
         timestamp = int(time.mktime(dt.timetuple()))
-            
-        # Vérification des arguments restants
+
         if len(args) == 0:
             await ctx.send("Veuillez spécifier un message.")
             return
 
         else:
-            message =f"<@&1283096960567480321> Jusqu'au <t:{timestamp}:F>, <t:{timestamp}:R> " + " ".join(args) # Tout est considéré comme le message
+            message =f"<@&{drop_role}> Jusqu'au <t:{timestamp}:F>, <t:{timestamp}:R> " + " ".join(args)
                     
         if not message:
             await ctx.send("Le contenu du message est vide. Veuillez fournir un message valide.")
             return
 
-        # Sauvegarde en mémoire
         message_id = save_message_to_db(send_time, channel_id, message)
         if message_id is None:
-            message_id = len(scheduled_messages) + 1  # ID temporaire si DB inaccessible
+            message_id = len(scheduled_messages) + 1
         scheduled_messages.append({"id": message_id, "send_time": send_time, "channel_id": channel_id, "message": message})
 
         await ctx.send(f"Message programmé pour le {send_time} dans le canal <#{channel_id}>.")
@@ -186,36 +165,32 @@ async def drop(ctx, date1: str, time1: str, date2:str, time2:str, *args):
                 
 @bot.command()
 @commands.check(is_admin)
-async def preview(ctx, date: str, time: str, *args):
+async def plan(ctx, date: str, time: str, *args):
     """
     Programme un message.
-    Exemple : !drop 21/11/24 18:30 #général Bonjour tout le monde !
-              !drop 21/11/24 18:30 Bonjour tout le monde ! (par défaut dans #le_marché)
+    Exemple : !plan 21/11/24 18:30 #général Bonjour tout le monde !
+              !plan 21/11/24 18:30 Bonjour tout le monde !
     """
     try:
-        # Conversion de la date et de l'heure
         send_time = datetime.strptime(f"{date} {time}", "%d/%m/%y %H:%M")
 
-        # Vérification des arguments restants
         if len(args) == 0:
             await ctx.send("Veuillez spécifier un message ou un channel suivi d'un message.")
             return
 
-        if args[0].startswith("<#"):  # Si le premier argument est une mention de channel
+        if args[0].startswith("<#"):
             channel_id = int(args[0].strip("<#>"))
-            message = " ".join(args[1:])  # Le reste est le message
+            message = " ".join(args[1:])
         else:
-            channel_id = DEFAULT_CHANNEL_ID  # Par défaut
-            message = " ".join(args)  # Tout est considéré comme le message
-
+            channel_id = DEFAULT_CHANNEL_ID
+            message = " ".join(args)
         if not message:
             await ctx.send("Le contenu du message est vide. Veuillez fournir un message valide.")
             return
 
-        # Sauvegarde en mémoire
         message_id = save_message_to_db(send_time, channel_id, message)
         if message_id is None:
-            message_id = len(scheduled_messages) + 1  # ID temporaire si DB inaccessible
+            message_id = len(scheduled_messages) + 1
         scheduled_messages.append({"id": message_id, "send_time": send_time, "channel_id": channel_id, "message": message})
 
         await ctx.send(f"Message programmé pour le {send_time} dans le canal <#{channel_id}>.")
@@ -238,16 +213,14 @@ async def view(ctx):
             send = msg['send_time']
             line = f"- {msg['id']}. <t:{(int(time.mktime(send.timetuple())))}:R> dans <#{msg['channel_id']}> : {msg['message']}\n"
             if len(response) + len(line) > 2000:
-                messages.append(response)  # Sauvegarde le bloc actuel
-                response = line  # Commence un nouveau bloc
+                messages.append(response)
+                response = line
             else:
                 response += line
-        
-        # Ajouter le dernier bloc s'il y en a un
+
         if response:
             messages.append(response)
-        
-        # Envoyer les blocs un par un
+
         for part in messages:
             await ctx.send(part)
     else:
@@ -277,6 +250,7 @@ async def edit(ctx, message_id: int, field: str, *, value: str):
     """
     Modifie un message programmé.
     Exemple : !edit 1 message <Nouveau contenu du message>
+    date, channel, message
     """
     global scheduled_messages
     fields = {"date": "send_time", "message": "message", "channel": "channel_id"}
@@ -300,7 +274,6 @@ async def edit(ctx, message_id: int, field: str, *, value: str):
             new_value = value
             message_to_edit["message"] = new_value
 
-        # Mise à jour dans la DB si possible
         db = connect_db()
         if db:
             cursor = db.cursor()
@@ -332,6 +305,27 @@ async def clear(ctx):
 
     await ctx.channel.purge(limit=None, check=is_bot_command_or_message, bulk=True)
     await ctx.send("Nettoyage terminé.", delete_after=5)
+    
+@bot.command()
+@commands.check(is_admin)
+async def test(ctx):
+    """
+    Envoie 3 messages espacés de 5 secondes.
+    """
+    guild = ctx.guild
+    channel = ctx.channel
+
+    for i in range(3):
+            try:
+                await channel.send(f"Message test {i+1}")
+            except discord.Forbidden:
+                await ctx.send("Erreur : le bot n'a pas la permission d'envoyer des messages.")
+            except discord.HTTPException as e:
+                await ctx.send(f"Erreur lors de l'envoi : {e}")
+                return
+            await asyncio.sleep(1)
+            if i < 2:
+                await asyncio.sleep(5)
 
 # --- Tâches asynchrones ---
 @tasks.loop(seconds=20)
@@ -353,7 +347,7 @@ async def send_scheduled_messages():
 
 @bot.event
 async def on_ready():
-    load_messages_from_db()  # Charger les messages au démarrage
-    send_scheduled_messages.start()  # Démarrer la tâche d'envoi
+    load_messages_from_db()
+    send_scheduled_messages.start()
 
 bot.run(TOKEN)
