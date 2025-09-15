@@ -5,4 +5,4 @@ This discord bot project was initially made to act as a reminder for twitch drop
 - timestamp creator with all the possible modifiers usable in discord
 - cleaner, will clean all the messages of the bot and all of his commands
 
-I used it as well, to create 
+I used it as well, to create some small programs via commands, since it's python it's very easy to make small changes and add new features.
