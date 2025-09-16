@@ -39,7 +39,7 @@ def connect_db():
 
 def load_messages_from_db():
     """
-    Load messages from the databse and sync them with the memory.
+    Load messages from the databse and sync them in the memory.
     """
     global scheduled_messages
     db = connect_db()
@@ -94,18 +94,17 @@ async def on_command_error(ctx, error):
 @commands.check(is_admin)
 async def timestamp(ctx, date: str, time_str: str, format_code: str = "R"):
     """
-    Permet d'avoir le timestamp
-    En fonction de l'année, le mois, le jour, l'heure, la minute, et la seconde
+    With year, month, day, hour, minute and second.
     22/07/2066 17:15:00
-    R Relatif : dans x années
-    t Temps cours : 17:15
-    T Temps long : 17:15:00
-    d Date courte : 22/07/2066
-    D Date longue : 22 juillet 2066
-    f Date longue avec heure : 22 juillet 2066 17:15
-    F Date longue avec jour de la semaine : jeudi 22 juillet 2066 17:15
+    R Relative : In x Years
+    t Short time : 17:15
+    T Long time : 17:15:00
+    d Short date : 22/07/2066
+    D Long date : 22 July 2066
+    f Long date with hour : 22 July 2066 17:15
+    F Long date with day of the week : Thursday 22 july 2066 17:15
     
-    Exemple : !timestamp 13/01/2025 12:15:00 R
+    Example : !timestamp 13/01/2025 12:15:00 R
     --> <t:1736766900:R>
     """
     valid_formats = ["R", "t", "T", "d", "D", "f", "F"]
@@ -351,4 +350,5 @@ async def on_ready():
     send_scheduled_messages.start()
 
 bot.run(TOKEN)
+
 
