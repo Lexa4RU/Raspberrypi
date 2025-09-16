@@ -39,7 +39,7 @@ def connect_db():
 
 def load_messages_from_db():
     """
-    Charge les messages depuis la base de données et synchronise strictement les messages en memoire avec les messages de la base.
+    Load messages from the databse and sync them with the memory.
     """
     global scheduled_messages
     db = connect_db()
@@ -52,7 +52,7 @@ def load_messages_from_db():
         
 def save_message_to_db(send_time, channel_id, message):
     """
-    Sauvegarde les messages dans la base de données
+    Saves the messages to the database.
     """
     db = connect_db()
     if db:
@@ -70,7 +70,7 @@ def save_message_to_db(send_time, channel_id, message):
 
 def delete_message_from_db(message_id):
     """
-    Supprime le message spécifié de la base de données
+    Delete specified messages from the database.
     """
     db = connect_db()
     if db:
@@ -86,9 +86,9 @@ def delete_message_from_db(message_id):
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
-        await ctx.send("❌ Vous n'avez pas la permission d'utiliser cette commande.")
+        await ctx.send("You don't have enough permission to use this command.")
     else:
-        await ctx.send(f"❌ Une erreur est survenue : {error}")
+        await ctx.send(f"An error as occured : {error}")
 
 @bot.command()
 @commands.check(is_admin)
@@ -114,7 +114,7 @@ async def timestamp(ctx, date: str, time_str: str, format_code: str = "R"):
         dt = datetime.strptime(f"{date} {time_str}", "%d/%m/%y %H:%M:%S")
 
         if format_code not in valid_formats:
-            await ctx.send(f"Format invalide. Utilisez l'un des formats suivants : {', '.join(valid_formats)}.")
+            await ctx.send(f"Inlavid format. Use one of the following format : {', '.join(valid_formats)}.")
             return
 
         timestamp = int(time.mktime(dt.timetuple()))
@@ -122,9 +122,9 @@ async def timestamp(ctx, date: str, time_str: str, format_code: str = "R"):
         await ctx.send(f"```<t:{timestamp}:{format_code}>```")
     
     except ValueError:
-        await ctx.send("Format de date ou d'heure incorrect. Utilisez JJ/MM/AA HH:MM:SS.")
+        await ctx.send("Date or hour format incorrect. Use DD/MM/YY HH:MM:SS.")
     except Exception as e:
-        await ctx.send(f"Une erreur est survenue : {e}")
+        await ctx.send(f"An error as occured : {e}")
 
 @bot.command()
 @commands.check(is_admin)
@@ -351,3 +351,4 @@ async def on_ready():
     send_scheduled_messages.start()
 
 bot.run(TOKEN)
+
