@@ -6,7 +6,6 @@
 </header>
 
 <div style="display: flex;">
-    <!-- Barre latérale -->
     <aside style="width: 200px; padding: 10px; border-right: 1px solid #ddd;">
         <nav>
             <ul style="list-style-type: none; padding: 0;">
@@ -21,8 +20,6 @@
             </ul>
         </nav>
     </aside>
-
-    <!-- Contenu principal -->
     <main style="flex-grow: 1; padding: 10px;">     
         {% for nation in nation_order %}
             {% if tanks_by_nation[nation] %}
@@ -101,12 +98,8 @@
 
 <script>
     function filterTanks() {
-        // Récupère la valeur de recherche et ignore les espaces
         let input = document.getElementById('searchInput').value.toLowerCase().replace(/\s+/g, '');
-
-        // Fonction de correspondance flexible (recherche approximative)
         function fuzzyMatch(str, pattern) {
-            // Élimine les espaces et compare les lettres du pattern avec celles du str
             let strCleaned = str.replace(/\s+/g, '').toLowerCase();
             let patternIndex = 0;
             for (let i = 0; i < strCleaned.length; i++) {
@@ -119,42 +112,32 @@
             }
             return false;
         }
-
-        // Récupère tous les tableaux de tanks
         let tables = document.querySelectorAll('table');
-
-        // Parcourt chaque tableau
         tables.forEach(table => {
             let rows = table.querySelectorAll('tbody tr');
-            let hasVisibleRow = false; // Suivi des lignes visibles pour chaque tableau
-
-            // Parcourt chaque ligne de chaque tableau
+            let hasVisibleRow = false; 
             rows.forEach(row => {
                 let nameCell = row.getElementsByTagName('td')[0];
-
-                // Vérifie si la ligne correspond à la recherche avec correspondance flexible
                 if (nameCell) {
                     let txtValue = nameCell.textContent || nameCell.innerText;
                     if (fuzzyMatch(txtValue, input)) {
-                        row.style.display = ""; // Affiche la ligne
-                        hasVisibleRow = true;  // Il y a au moins une ligne visible
+                        row.style.display = "";
+                        hasVisibleRow = true;
                     } else {
-                        row.style.display = "none"; // Cache la ligne
+                        row.style.display = "none";
                     }
                 }
             });
-
-            // Si aucune ligne n'est visible, cache le tableau et son titre de nation
-            let nationHeader = table.previousElementSibling; // Le titre de la nation juste avant le tableau
+            let nationHeader = table.previousElementSibling;
             if (hasVisibleRow) {
-                table.style.display = ""; // Affiche le tableau
+                table.style.display = "";
                 if (nationHeader.tagName.toLowerCase() === 'h2') {
-                    nationHeader.style.display = ""; // Affiche le titre de la nation
+                    nationHeader.style.display = "";
                 }
             } else {
-                table.style.display = "none"; // Cache le tableau
+                table.style.display = "none";
                 if (nationHeader.tagName.toLowerCase() === 'h2') {
-                    nationHeader.style.display = "none"; // Cache le titre de la nation
+                    nationHeader.style.display = "none";
                 }
             }
         });
