@@ -144,13 +144,6 @@ def logout():
     response.delete_cookie('access_token_cookie')
     return response
 
-@app.route('/usage')
-def about():
-
-    is_logged_in = is_user_logged_in()
-
-    return render_template('usage.html', is_logged_in = is_logged_in)
-
 @app.route('/add_moe', methods=['GET', 'POST'])
 @jwt_required()
 def add_moe():
