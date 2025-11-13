@@ -29,7 +29,7 @@ app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(weeks=4)
 app.config['JWT_TOKEN_LOCATION'] = os.getenv('JWT_TOKEN_LOCATION')
 app.config['JWT_ACCESS_COOKIE_PATH'] = os.getenv('JWT_ACCESS_COOKIE_PATH')
-app.config['JWT_COOKIE_CSRF_PROTECT'] = os.getenv('JWT_COOKIE_CSRF_PROTECT')
+app.config['JWT_COOKIE_CSRF_PROTECT'] = False
 app.config['JWT_ACCESS_COOKIE_NAME'] = os.getenv('JWT_ACCESS_COOKIE_NAME')
 
 jwt = JWTManager(app)
@@ -65,8 +65,32 @@ def is_user_logged_in():
     except PyJWTError:
         return False
     
-@app.route('/')
+@app.route('/')    
 def index():
+    is_logged_in = is_user_logged_in() 
+
+    return render_template('index.html', is_logged_in = is_logged_in)    
+
+@app.route('/olga')
+@jwt_required()
+def olga():
+    current_user = get_jwt_identity()
+    
+    is_logged_in = is_user_logged_in() 
+    
+    return render_template('olga.html', is_logged_in = is_logged_in)
+
+@app.route('/olga-crea')
+@jwt_required()
+def olga_crea():
+    current_user = get_jwt_identity()
+    
+    is_logged_in = is_user_logged_in() 
+    
+    return render_template('olga_crea.html', is_logged_in = is_logged_in)
+
+@app.route('/data-tracker')
+def data_tracker():
     conn = get_conn_connection()
 
     if conn:
@@ -102,9 +126,52 @@ def index():
 
 
         is_logged_in = is_user_logged_in()
-        return render_template('index.html', tanks_by_nation = tanks_by_nation, nation_order = nation_order,
+        return render_template('data_tracker.html', tanks_by_nation = tanks_by_nation, nation_order = nation_order,
                                 is_logged_in = is_logged_in)
     
+    else:
+        return "Error while connecting to Data Base"
+
+@app.route('/image')
+def image():
+    conn = get_conn_connection()
+
+    if conn:
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT
+               t.id,
+               t.name,
+               t.class,
+               t.tier,
+               t.type,
+               t.mastery,
+               t.moe,
+               t.nation_code,
+               n.nom_nation AS nation
+            FROM tanks t
+            JOIN nations n ON t.nation_code = n.code_nation
+            ORDER BY t.tier DESC,
+                    FIELD(t.class, 'Heavy Tank', 'Medium Tank', 'Tank Destroyer', 'Light Tank', 'Artillery')
+        """)
+        tanks = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+        nation_order = [
+            'Germany', 'USSR', 'USA', 'France', 'United Kingdom',
+            'China', 'Japan', 'Czech', 'Poland', 'Sweden', 'Italy'
+        ]
+
+        tanks_by_nation = {nation: [] for nation in nation_order}
+        for tank in tanks:
+            tanks_by_nation[tank['nation']].append(tank)
+
+
+        is_logged_in = is_user_logged_in()
+        return render_template('image.html', tanks_by_nation = tanks_by_nation, nation_order = nation_order,
+                                is_logged_in = is_logged_in)
+
     else:
         return "Error while connecting to Data Base"
 
@@ -123,7 +190,7 @@ def login():
             conn.close()
             if user:
                 access_token = create_access_token(identity=username)
-                response = make_response(redirect(url_for('index')))
+                response = make_response(redirect(url_for('data_tracker')))
 
                 next_page = session.pop('next', None)
                 if next_page:
@@ -168,7 +235,7 @@ def add_moe():
             conn.commit()
             cursor.close()
             conn.close()
-            return redirect(url_for('index'))
+            return redirect(url_for('data_tracker'))
         
         cursor = conn.cursor()
         cursor.execute("SELECT name FROM tanks WHERE tier >= 5")
@@ -206,7 +273,7 @@ def add_tank():
             conn.commit()
             cursor.close()
             conn.close()
-            return redirect(url_for('index'))
+            return redirect(url_for('data_tracker'))
         
         cursor = conn.cursor()
         cursor.execute("SELECT code_nation, nom_nation FROM nations")
@@ -479,10 +546,11 @@ def show_tank(tank_id):
             WHERE tank_id = %s
             ORDER BY moe_number
         """, (tank_id,))
-        moes = cursor.fetchall()
+        rows = cursor.fetchall()
 
-        for moe in moes:
-            moe['date_obtained'] = moe['date_obtained'].strftime('%d/%m/%Y')
+        moes = {}
+        for row in rows:
+            moes[row['moe_number']] = row['date_obtained'].strftime('%d/%m/%Y')
 
         cursor.close()
         conn.close()
