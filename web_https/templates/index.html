@@ -1,147 +1,29 @@
-{% include 'includes/header.html' %}
-<title>Home</title>
+{% include 'includes/rasp_header.html' %}
 
-<header>
-    <h1>List of all Tanks</h1>
-</header>
+        <title>Home</title>
 
-<div style="display: flex;">
-    <aside style="width: 200px; padding: 10px; border-right: 1px solid #ddd;">
-        <nav>
-            <ul style="list-style-type: none; padding: 0;">
-                <input type="text" id="searchInput" placeholder="Search tanks..." onkeyup="filterTanks()" style="margin-top: 20px; padding: 10px; width: 100%; box-sizing: border-box;">
-                {% for nation in nation_order %}
-                    {% if tanks_by_nation[nation] %}
-                        <li style="margin-bottom: 10px;">
-                            <a href="#{{ nation }}" style="text-decoration: none;">{{ nation }}</a>
-                        </li>
-                    {% endif %}
-                {% endfor %}
-            </ul>
-        </nav>
-    </aside>
-    <main style="flex-grow: 1; padding: 10px;">     
-        {% for nation in nation_order %}
-            {% if tanks_by_nation[nation] %}
-            <br>
-            <h2 id="{{ nation }}" class="text-center">{{ nation }}</h2>
-            <br>
+        <header>
+            <h1>List of all the modules availables</h1>
+        </header>
 
+        <div style="display: flex;">
+            <main style="flex-grow: 1; padding: 10px;">     
             <table class="justify-content-center" border="1" id="tankTable-{{ nation }}">
                 <thead>
                     <tr>
                         <th>Name</th>
-                        <th>Class</th>
-                        <th>Tier</th>
-                        <th>Type</th>
-                        <th>Marks of Excellence</th>
-                        <th>Mastery Badge</th>
+                        <th>Description</th>
+
                     </tr>
                 </thead>
                 <tbody>
-                    {% for tank in tanks_by_nation[nation] %}
-                    <tr>
-                        <td>
-                            <a href="{{ url_for('show_tank', tank_id=tank.id) }}">{{ tank.name }}</a>
-                        </td>
-                        <td>
-                            {% if tank.class == 'Artillery' %}
-                                <img src="{{ url_for('static', filename='images/Artillery.png') }}" alt="Artillery">
-                            {% elif tank.class == 'Heavy Tank' %}
-                                <img src="{{ url_for('static', filename='images/Heavy_Tank.png') }}" alt="Heavy Tank">
-                            {% elif tank.class == 'Medium Tank' %}
-                                <img src="{{ url_for('static', filename='images/Medium_Tank.png') }}" alt="Medium Tank">
-                            {% elif tank.class == 'Light Tank' %}
-                                <img src="{{ url_for('static', filename='images/Light_Tank.png') }}" alt="Medium Tank">
-                            {% else %}
-                                <img src="{{ url_for('static', filename='images/Tank_Destroyer.png') }}" alt="Tank Destroyer">
-                            {% endif %}   
-                        </td>
-                        <td>{{ tank.tier }}</td>
-                        <td>{{ tank.type }}</td>
-                        <td>
-                            {% if tank.tier > 4 %}
-                                {% if tank.moe > 0 %}
-                                    {% set moe_image_path = 'images/moes/' ~ tank.nation_code|lower ~ '_' ~ tank.moe ~ '_mark.webp' %}
-                                    <img src="{{ url_for('static', filename=moe_image_path) }}" 
-                                    alt="{{ tank.moe }} Mark(s) of Excellence for {{ tank.nation }}" 
-                                    class="moeindex">
-                                {% else %}
-                                    No Marks of Excellence
-                                {% endif %}
-                            {% else %}
-                                Unavailable
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if tank.mastery == 4 %}
-                                <img src="{{ url_for('static', filename='images/4.webp') }}" alt="Ace Mastery Badge" class="masteryindex">
-                            {% elif tank.mastery == 3 %}
-                                <img src="{{ url_for('static', filename='images/3.webp') }}" alt="1st Class Mastery Badge" class="masteryindex">
-                            {% elif tank.mastery == 2 %}
-                                <img src="{{ url_for('static', filename='images/2.webp') }}" alt="2nd Class Mastery Badge" class="masteryindex">
-                            {% elif tank.mastery == 1 %}
-                                <img src="{{ url_for('static', filename='images/1.webp') }}" alt="3rd Class Mastery Badge" class="masteryindex">
-                            {% else %}
-                                <img src="{{ url_for('static', filename='images/0.webp') }}" alt="No Mastery Badge" class="masteryindex">
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
+                    <tr><td><a class="nav-link" href="/data-tracker">Data Tracker</a></td><td>???</td></tr>
+                    <tr><td><a class="nav-link" href="https://elitedesk:10000/">Webmin Elitedesk</a></td><td>???</td></tr>
+                    <tr><td><a class="nav-link" href="https://raspberrypi:10000/">Webmin Raspberrypi</a></td><td>???</td></tr>
+                    <tr><td><a class="nav-link" href="http://elitedesk:8080/">AMP</a></td><td>???</td></tr>
                 </tbody>
             </table>
-            {% endif %}
-        {% endfor %}
-        <br>
     </main>
 </div>
-
-<script>
-    function filterTanks() {
-        let input = document.getElementById('searchInput').value.toLowerCase().replace(/\s+/g, '');
-        function fuzzyMatch(str, pattern) {
-            let strCleaned = str.replace(/\s+/g, '').toLowerCase();
-            let patternIndex = 0;
-            for (let i = 0; i < strCleaned.length; i++) {
-                if (strCleaned[i] === pattern[patternIndex]) {
-                    patternIndex++;
-                }
-                if (patternIndex === pattern.length) {
-                    return true;
-                }
-            }
-            return false;
-        }
-        let tables = document.querySelectorAll('table');
-        tables.forEach(table => {
-            let rows = table.querySelectorAll('tbody tr');
-            let hasVisibleRow = false; 
-            rows.forEach(row => {
-                let nameCell = row.getElementsByTagName('td')[0];
-                if (nameCell) {
-                    let txtValue = nameCell.textContent || nameCell.innerText;
-                    if (fuzzyMatch(txtValue, input)) {
-                        row.style.display = "";
-                        hasVisibleRow = true;
-                    } else {
-                        row.style.display = "none";
-                    }
-                }
-            });
-            let nationHeader = table.previousElementSibling;
-            if (hasVisibleRow) {
-                table.style.display = "";
-                if (nationHeader.tagName.toLowerCase() === 'h2') {
-                    nationHeader.style.display = "";
-                }
-            } else {
-                table.style.display = "none";
-                if (nationHeader.tagName.toLowerCase() === 'h2') {
-                    nationHeader.style.display = "none";
-                }
-            }
-        });
-    }
-</script>
 
 {% include 'includes/footer.html' %}

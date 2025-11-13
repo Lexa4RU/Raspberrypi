@@ -29,7 +29,7 @@
         
                 <label for="tier">Tier :</label>
                 <select id="tier" name="tier" required>  
-                    {% for i in range(1, 11) %}
+                    {% for i in range(1, 12) %}
                     <option value="{{ i }}" {% if tank.tier == i %}selected{% endif %}>{{ i }}</option>
                     {% endfor %}
                 </select>
