@@ -7,7 +7,7 @@
         <meta name="author" content="Lev Tolstoï" />
         
         <!-- Favicon-->
-        <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='icones/tank.png') }}" />
+        <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='icones/raspberry.png') }}" />
         <!-- Core theme CSS (includes Bootstrap)-->
         <link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet" />
     </head>
@@ -19,16 +19,11 @@
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
-                        <li class="nav-item"><a class="nav-link active" aria-current="page" href="/data-tracker">Home</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/add_moe">Add a moe</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/add_tank">Add a Tank</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/moe_charts">Moe Charts</a></li>
-			            <li class="nav-item">
-                            {% if is_logged_in %}
-                                <a class="nav-link" href="/image">Image</a> 
-                            {% endif %}
-                        </li>
-                        <li class="nav-item">
+                        <li class="nav-item"><a class="nav-link" href="/data-tracker">Data Tracker</a></li>
+                        <li class="nav-item"><a class="nav-link" href="https://elitedesk:10000/">Webmin Elitedesk</a></li>
+                        <li class="nav-item"><a class="nav-link" href="https://raspberrypi:10000/">Webmin Raspberrypi</a></li>
+                        <li class="nav-item"><a class="nav-link" href="http://elitedesk:8080/">AMP</a></li>
+			<li class="nav-item">
                             {% if is_logged_in %}
                                 <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
                             {% else %}
