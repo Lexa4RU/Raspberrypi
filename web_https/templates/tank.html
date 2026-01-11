@@ -36,7 +36,6 @@
         </p>
     </div>
     <div class="tank-image">
-    {# Use the API image if found, otherwise fall back to your local default #}
     <img src="{{ tank.api_image if tank.api_image else url_for('static', filename='images/default.png') }}" 
          alt="{{ tank.name }} Image"
          onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/default.png') }}';">
