@@ -17,6 +17,7 @@ import threading
 import plotly.graph_objs as go
 import hashlib
 import os
+import requests
 
 load_dotenv()
 
@@ -71,24 +72,6 @@ def index():
 
     return render_template('index.html', is_logged_in = is_logged_in)    
 
-@app.route('/olga')
-@jwt_required()
-def olga():
-    current_user = get_jwt_identity()
-    
-    is_logged_in = is_user_logged_in() 
-    
-    return render_template('olga.html', is_logged_in = is_logged_in)
-
-@app.route('/olga-crea')
-@jwt_required()
-def olga_crea():
-    current_user = get_jwt_identity()
-    
-    is_logged_in = is_user_logged_in() 
-    
-    return render_template('olga_crea.html', is_logged_in = is_logged_in)
-
 @app.route('/data-tracker')
 def data_tracker():
     conn = get_conn_connection()
@@ -97,14 +80,7 @@ def data_tracker():
         cursor = conn.cursor(dictionary=True)
         cursor.execute("""
             SELECT 
-               t.id, 
-               t.name,
-               t.class, 
-               t.tier, 
-               t.type,
-               t.mastery,
-               t.moe,
-               t.nation_code,  
+               t.*, 
                n.nom_nation AS nation 
             FROM tanks t 
             JOIN nations n ON t.nation_code = n.code_nation
@@ -124,15 +100,13 @@ def data_tracker():
         for tank in tanks:
             tanks_by_nation[tank['nation']].append(tank)
 
-
         is_logged_in = is_user_logged_in()
-        return render_template('data_tracker.html', tanks_by_nation = tanks_by_nation, nation_order = nation_order,
-                                is_logged_in = is_logged_in)
+        return render_template('data_tracker.html', tanks_by_nation = tanks_by_nation, nation_order = nation_order, is_logged_in = is_logged_in)
     
     else:
         return "Error while connecting to Data Base"
 
-@app.route('/image')
+@app.route('/data-tracker/image')
 def image():
     conn = get_conn_connection()
 
@@ -140,14 +114,7 @@ def image():
         cursor = conn.cursor(dictionary=True)
         cursor.execute("""
             SELECT
-               t.id,
-               t.name,
-               t.class,
-               t.tier,
-               t.type,
-               t.mastery,
-               t.moe,
-               t.nation_code,
+               t.*,
                n.nom_nation AS nation
             FROM tanks t
             JOIN nations n ON t.nation_code = n.code_nation
@@ -166,6 +133,24 @@ def image():
         tanks_by_nation = {nation: [] for nation in nation_order}
         for tank in tanks:
             tanks_by_nation[tank['nation']].append(tank)
+
+        if tank:
+            # --- NEW API LOGIC ---
+            # 1. Use your wg_id to get the tag/image from Wargaming
+            # Replace 'YOUR_APP_ID' with your Wargaming Developer App ID
+            app_id = os.getenv('app_id') 
+            api_url = f"https://api.worldoftanks.eu/wot/encyclopedia/vehicles/?application_id={app_id}&tank_id={tank['wg_id']}&fields=images.big_icon"
+        
+            try:
+                response = requests.get(api_url).json()
+                if response['status'] == 'ok' and str(tank['wg_id']) in response['data']:
+                    # Get the URL directly from the API response
+                    tank['api_image'] = response['data'][str(tank['wg_id'])]['images']['big_icon']
+                else:
+                    tank['api_image'] = None
+            except Exception as e:
+                print(f"API Error: {e}")
+                tank['api_image'] = None     
 
 
         is_logged_in = is_user_logged_in()
@@ -211,7 +196,7 @@ def logout():
     response.delete_cookie('access_token_cookie')
     return response
 
-@app.route('/add_moe', methods=['GET', 'POST'])
+@app.route('/data-tracker/add_moe', methods=['GET', 'POST'])
 @jwt_required()
 def add_moe():
     current_user = get_jwt_identity()
@@ -249,7 +234,7 @@ def add_moe():
     else:
         return "Error while connecting to Data Base"
 
-@app.route('/add_tank', methods=['GET', 'POST'])
+@app.route('/data-tracker/add_tank', methods=['GET', 'POST'])
 @jwt_required()
 def add_tank():
     current_user = get_jwt_identity()
@@ -288,257 +273,178 @@ def add_tank():
     else:
         return "Error while connecting to Data Base"
 
-@app.route('/moe_charts')
-def moe_charts():
+@app.route('/data-tracker/charts')
+def charts():
     conn = get_conn_connection()
-    if conn:
-        cursor = conn.cursor(dictionary=True)
-
-        class_order = ['Heavy Tank', 'Medium Tank', 'Tank Destroyer', 'Light Tank', 'Artillery']
-
-        cursor.execute("""
-            SELECT class,
-                   SUM(CASE WHEN moe = 1 THEN 1 ELSE 0 END) AS moe_1,
-                   SUM(CASE WHEN moe = 2 THEN 1 ELSE 0 END) AS moe_2,
-                   SUM(CASE WHEN moe = 3 THEN 1 ELSE 0 END) AS moe_3,
-                   COUNT(*) AS total_tanks
-            FROM tanks
-            WHERE tier >= 5
-            GROUP BY class
-        """)
-        moe_by_class = cursor.fetchall()
-
-        cursor.execute("""
-            SELECT moe_number, date_obtained
-            FROM moes
-            ORDER BY date_obtained
-        """)
-        moe_progression = cursor.fetchall()
-
-        cursor.execute("""
-            SELECT class,
-                   COUNT(*) AS total_tanks,
-                   SUM(CASE WHEN moe = 3 THEN 1 ELSE 0 END) AS moe_3_count
-            FROM tanks
-            WHERE tier >= 5
-            GROUP BY class
-        """)
-        class_completion = cursor.fetchall()
-
-        cursor.execute("""
-            SELECT tier,
-                   COUNT(*) AS total_tanks,
-                   SUM(CASE WHEN moe = 3 THEN 1 ELSE 0 END) AS moe_3_count
-            FROM tanks
-            WHERE tier >= 5
-            GROUP BY tier
-        """)
-        tier_completion = cursor.fetchall()
-
-        cursor.close()
-        conn.close()
-
-        classes = []
-        moe_1_counts = []
-        moe_2_counts = []
-        moe_3_counts = []
-        for class_type in class_order:
-            found = False
-            for row in moe_by_class:
-                if row['class'] == class_type:
-                    classes.append(row['class'])
-                    moe_1_counts.append(row['moe_1'])
-                    moe_2_counts.append(row['moe_2'])
-                    moe_3_counts.append(row['moe_3'])
-                    found = True
-                    break
-            if not found:
-                classes.append(class_type)
-                moe_1_counts.append(0)
-                moe_2_counts.append(0)
-                moe_3_counts.append(0)
-
-        moe_1_monthly = defaultdict(int)
-        moe_2_monthly = defaultdict(int)
-        moe_3_monthly = defaultdict(int)
-
-        for row in moe_progression:
-            date = row['date_obtained']
-            month_year = date.strftime('%Y-%m')
-            if row['moe_number'] == 1:
-                moe_1_monthly[month_year] += 1
-            elif row['moe_number'] == 2:
-                moe_2_monthly[month_year] += 1
-            elif row['moe_number'] == 3:
-                moe_3_monthly[month_year] += 1
-
-        all_months = set(moe_1_monthly.keys()) | set(moe_2_monthly.keys()) | set(moe_3_monthly.keys())
-        sorted_months = sorted(all_months)
-
-        cumulative_moe_1 = []
-        cumulative_moe_2 = []
-        cumulative_moe_3 = []
-        total_moe_1 = total_moe_2 = total_moe_3 = 0
-
-        for month in sorted_months:
-            total_moe_1 += moe_1_monthly.get(month, 0)
-            total_moe_2 += moe_2_monthly.get(month, 0)
-            total_moe_3 += moe_3_monthly.get(month, 0)
-            cumulative_moe_1.append(total_moe_1)
-            cumulative_moe_2.append(total_moe_2)
-            cumulative_moe_3.append(total_moe_3)
-
-        bar_chart = go.Figure()
-        bar_chart.add_trace(go.Bar(
-            x=classes,
-            y=moe_1_counts,
-            name='1e MOE',
-            marker_color='#ED7D31',
-            text=moe_1_counts,
-            textposition='outside'
-        ))
-        bar_chart.add_trace(go.Bar(
-            x=classes,
-            y=moe_2_counts,
-            name='2e MOE',
-            marker_color='#F4BA04',
-            text=moe_2_counts,
-            textposition='outside'
-        ))
-        bar_chart.add_trace(go.Bar(
-            x=classes,
-            y=moe_3_counts,
-            name='3e MOE',
-            marker_color='#6FAA46',
-            text=moe_3_counts,
-            textposition='outside'
-        ))
-        bar_chart.update_layout(
-        )
-
-        stacked_chart = go.Figure()
-
-        stacked_chart.add_trace(go.Scatter(
-            x=sorted_months,
-            y=cumulative_moe_1,
-            mode='lines+markers',
-            name="1e MOE",
-            line=dict(color='#ED7D31', width=2)
-        ))
-
-        stacked_chart.add_trace(go.Scatter(
-            x=sorted_months,
-            y=cumulative_moe_2,
-            mode='lines+markers',
-            name="2e MOE",
-            line=dict(color='#F4BA04', width=2)
-        ))
-
-        stacked_chart.add_trace(go.Scatter(
-            x=sorted_months,
-            y=cumulative_moe_3,
-            mode='lines+markers',
-            name="3e MOE",
-            line=dict(color='#6FAA46', width=2)
-        ))
-
-        start_year = int(sorted_months[0][:4])
-        end_year = int(sorted_months[-1][:4])
-        for year in range(start_year, end_year + 1):
-            january = f'{year}-01'
-            if january in sorted_months:
-                idx = sorted_months.index(january)
-                stacked_chart.add_annotation(
-                    x=january,
-                    y=cumulative_moe_1[idx],
-                    text=str(cumulative_moe_1[idx]),
-                    showarrow=True,
-                    arrowhead=2,
-                    ax=0,
-                    ay=-30,
-                    font=dict(color='#ED7D31')
-                )
-                stacked_chart.add_annotation(
-                    x=january,
-                    y=cumulative_moe_2[idx],
-                    text=str(cumulative_moe_2[idx]),
-                    showarrow=True,
-                    arrowhead=2,
-                    ax=0,
-                    ay=-30,
-                    font=dict(color='#F4BA04')
-                )
-                stacked_chart.add_annotation(
-                    x=january,
-                    y=cumulative_moe_3[idx],
-                    text=str(cumulative_moe_3[idx]),
-                    showarrow=True,
-                    arrowhead=2,
-                    ax=0,
-                    ay=-30,
-                    font=dict(color='#6FAA46')
-                )
-
-        stacked_chart.update_layout(
-            showlegend=True
-        )
-
-        bar_chart_div = bar_chart.to_html(full_html=False)
-        stacked_chart_div = stacked_chart.to_html(full_html=False)
-
-        total_class_tanks = 0
-        total_class_moe_3 = 0
-        for row in class_completion:
-            row['completion_rate'] = (row['moe_3_count'] / row['total_tanks']) * 100 if row['total_tanks'] > 0 else 0
-            total_class_tanks += row['total_tanks']
-            total_class_moe_3 += row['moe_3_count']
-
-        total_tier_tanks = 0
-        total_tier_moe_3 = 0
-        for row in tier_completion:
-            row['completion_rate'] = (row['moe_3_count'] / row['total_tanks']) * 100 if row['total_tanks'] > 0 else 0
-            total_tier_tanks += row['total_tanks']
-            total_tier_moe_3 += row['moe_3_count']
-
-        is_logged_in = is_user_logged_in() 
-        return render_template('moe_charts.html',
-            bar_chart_div=bar_chart_div,
-            stacked_chart_div=stacked_chart_div,
-            class_completion=class_completion,
-            tier_completion=tier_completion,
-            total_class_tanks=total_class_tanks,
-            total_class_moe_3=total_class_moe_3,
-            total_tier_tanks=total_tier_tanks,
-            total_tier_moe_3=total_tier_moe_3,
-            is_logged_in=is_logged_in)
-
-    else:
+    if not conn:
         return "Error while connecting to the Data Base"
 
-@app.route('/tank/<int:tank_id>')
+    cursor = conn.cursor(dictionary=True)
+    class_order = ['Heavy Tank', 'Medium Tank', 'Tank Destroyer', 'Light Tank', 'Artillery']
+
+    cursor.execute("""
+        SELECT class,
+               SUM(CASE WHEN moe = 1 THEN 1 ELSE 0 END) AS moe_1,
+               SUM(CASE WHEN moe = 2 THEN 1 ELSE 0 END) AS moe_2,
+               SUM(CASE WHEN moe = 3 THEN 1 ELSE 0 END) AS moe_3,
+               COUNT(*) AS total_tanks
+        FROM tanks WHERE tier >= 5 GROUP BY class
+    """)
+    moe_by_class = cursor.fetchall()
+
+    cursor.execute("SELECT moe_number, date_obtained FROM moes ORDER BY date_obtained")
+    moe_progression = cursor.fetchall()
+
+    cursor.execute("""
+        SELECT class, COUNT(*) AS total_tanks, SUM(CASE WHEN moe = 3 THEN 1 ELSE 0 END) AS moe_3_count
+        FROM tanks WHERE tier >= 5 GROUP BY class
+    """)
+    class_completion = cursor.fetchall()
+
+    cursor.execute("""
+        SELECT tier, COUNT(*) AS total_tanks, SUM(CASE WHEN moe = 3 THEN 1 ELSE 0 END) AS moe_3_count
+        FROM tanks WHERE tier >= 5 GROUP BY tier
+    """)
+    tier_completion = cursor.fetchall()
+
+    cursor.execute("""
+        SELECT class, COUNT(*) AS total_tanks, SUM(CASE WHEN mastery = 4 THEN 1 ELSE 0 END) AS aces_count
+        FROM tanks GROUP BY class
+    """)
+    aces_class_completion = cursor.fetchall()
+
+    cursor.execute("""
+        SELECT tier, COUNT(*) AS total_tanks, SUM(CASE WHEN mastery = 4 THEN 1 ELSE 0 END) AS aces_count
+        FROM tanks GROUP BY tier
+    """)
+    aces_tier_completion = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    classes, moe_1, moe_2, moe_3 = [], [], [], []
+    for c in class_order:
+        row = next((r for r in moe_by_class if r['class'] == c), None)
+        classes.append(c)
+        moe_1.append(row['moe_1'] if row else 0)
+        moe_2.append(row['moe_2'] if row else 0)
+        moe_3.append(row['moe_3'] if row else 0)
+
+    bar_chart = go.Figure()
+    config_bars = [
+        (moe_1, '1e MOE', '#ED7D31'),
+        (moe_2, '2e MOE', '#F4BA04'),
+        (moe_3, '3e MOE', '#6FAA46')
+    ]
+    for data, name, color in config_bars:
+        bar_chart.add_trace(go.Bar(
+            x=classes, y=data, name=name, marker_color=color,
+            text=data, textposition='outside'
+        ))
+
+    moe_monthly = {1: defaultdict(int), 2: defaultdict(int), 3: defaultdict(int)}
+    for row in moe_progression:
+        month = row['date_obtained'].strftime('%Y-%m')
+        moe_monthly[row['moe_number']][month] += 1
+
+    months = sorted(set().union(*[m.keys() for m in moe_monthly.values()]))
+    cumulative = {1: [], 2: [], 3: []}
+    totals = {1: 0, 2: 0, 3: 0}
+
+    for m in months:
+        for i in [1, 2, 3]:
+            totals[i] += moe_monthly[i].get(m, 0)
+            cumulative[i].append(totals[i])
+
+    stacked_chart = go.Figure()
+    colors = {1: '#ED7D31', 2: '#F4BA04', 3: '#6FAA46'}
+
+    for i in [1, 2, 3]:
+        stacked_chart.add_trace(go.Scatter(
+            x=months, y=cumulative[i], mode='lines+markers',
+            name=f'{i}e MOE', line=dict(color=colors[i], width=2)
+        ))
+
+    if months:
+        start_year = int(months[0][:4])
+        end_year = int(months[-1][:4])
+        for year in range(start_year, end_year + 1):
+            january = f'{year}-01'
+            if january in months:
+                idx = months.index(january)
+                for i in [1, 2, 3]:
+                    stacked_chart.add_annotation(
+                        x=january, y=cumulative[i][idx],
+                        text=str(cumulative[i][idx]),
+                        showarrow=True, arrowhead=2, ax=0, ay=-30,
+                        font=dict(color=colors[i])
+                    )
+
+    def compute_totals(rows, key):
+        total_tanks = total_done = 0
+        for r in rows:
+            r['completion_rate'] = (r[key] / r['total_tanks'] * 100) if r['total_tanks'] else 0
+            total_tanks += r['total_tanks']
+            total_done += r[key]
+        return total_tanks, total_done
+
+    t_cl_tanks, t_cl_moe3 = compute_totals(class_completion, 'moe_3_count')
+    t_tr_tanks, t_tr_moe3 = compute_totals(tier_completion, 'moe_3_count')
+    t_ace_cl_tanks, t_ace_cl = compute_totals(aces_class_completion, 'aces_count')
+    t_ace_tr_tanks, t_ace_tr = compute_totals(aces_tier_completion, 'aces_count')
+
+    return render_template(
+        'charts.html',
+        bar_chart_div=bar_chart.to_html(full_html=False),
+        stacked_chart_div=stacked_chart.to_html(full_html=False),
+        class_completion=class_completion,
+        tier_completion=tier_completion,
+        total_class_tanks=t_cl_tanks,
+        total_class_moe_3=t_cl_moe3,
+        total_tier_tanks=t_tr_tanks,
+        total_tier_moe_3=t_tr_moe3,
+        aces_class_completion=aces_class_completion,
+        aces_tier_completion=aces_tier_completion,
+        total_aces_class_tanks=t_ace_cl_tanks,
+        total_aces_class=t_ace_cl,
+        total_aces_tier_tanks=t_ace_tr_tanks,
+        total_aces_tier=t_ace_tr,
+        is_logged_in=is_user_logged_in()
+    )
+
+@app.route('/data-tracker/tank/<int:tank_id>/')
 def show_tank(tank_id):
     conn = get_conn_connection()
 
     if conn:
         cursor = conn.cursor(dictionary=True)
-        
         cursor.execute("""
             SELECT 
-                t.id, 
-                t.name,
-                t.full_name, 
-                t.class, 
-                t.tier, 
-                t.type, 
-                t.moe,
-                t.mastery,
-                t.nation_code, 
+                t.*, 
                 n.nom_nation AS nation 
             FROM tanks t 
             JOIN nations n ON t.nation_code = n.code_nation
             WHERE t.id = %s
         """, (tank_id,))
         tank = cursor.fetchone()
+        
+        if tank:
+            # --- NEW API LOGIC ---
+            # 1. Use your wg_id to get the tag/image from Wargaming
+            # Replace 'YOUR_APP_ID' with your Wargaming Developer App ID
+            app_id = os.getenv('app_id') 
+            api_url = f"https://api.worldoftanks.eu/wot/encyclopedia/vehicles/?application_id={app_id}&tank_id={tank['wg_id']}&fields=images.big_icon"
+        
+            try:
+                response = requests.get(api_url).json()
+                if response['status'] == 'ok' and str(tank['wg_id']) in response['data']:
+                    # Get the URL directly from the API response
+                    tank['api_image'] = response['data'][str(tank['wg_id'])]['images']['big_icon']
+                else:
+                    tank['api_image'] = None
+            except Exception as e:
+                print(f"API Error: {e}")
+                tank['api_image'] = None      
 
         cursor.execute("""
             SELECT moe_number, date_obtained 
@@ -564,7 +470,7 @@ def show_tank(tank_id):
     else:
         return "Error while connecting to the Data Base"
 
-@app.route('/tank/<int:tank_id>/edit', methods=['GET', 'POST'])
+@app.route('/data-tracker/tank/<int:tank_id>/edit', methods=['GET', 'POST'])
 @jwt_required()
 def edit_tank(tank_id):
     conn = get_conn_connection()
@@ -591,14 +497,7 @@ def edit_tank(tank_id):
         else:
             cursor.execute("""
                 SELECT 
-                t.id, 
-                t.name,
-                t.full_name, 
-                t.class, 
-                t.tier, 
-                t.type, 
-                t.mastery,
-                t.moe, 
+                t.*, 
                 n.nom_nation AS nation 
                 FROM tanks t 
                 JOIN nations n ON t.nation_code = n.code_nation
