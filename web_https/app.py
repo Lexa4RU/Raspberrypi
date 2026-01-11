@@ -135,9 +135,6 @@ def image():
             tanks_by_nation[tank['nation']].append(tank)
 
         if tank:
-            # --- NEW API LOGIC ---
-            # 1. Use your wg_id to get the tag/image from Wargaming
-            # Replace 'YOUR_APP_ID' with your Wargaming Developer App ID
             app_id = os.getenv('app_id') 
             api_url = f"https://api.worldoftanks.eu/wot/encyclopedia/vehicles/?application_id={app_id}&tank_id={tank['wg_id']}&fields=images.big_icon"
         
