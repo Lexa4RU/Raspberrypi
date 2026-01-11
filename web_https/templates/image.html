@@ -1,5 +1,5 @@
 {% include 'includes/header.html' %}
-<title>Home</title>
+<title>Image debuging</title>
 
 <header>
     <h1>List of all Tanks</h1>
@@ -26,16 +26,12 @@
     <main style="flex-grow: 1; padding: 10px;">     
         {% for nation in nation_order %}
             {% if tanks_by_nation[nation] %}
-            <br>
             <h2 id="{{ nation }}" class="text-center">{{ nation }}</h2>
-            <br>
-
             <table class="justify-content-center" border="1" id="tankTable-{{ nation }}">
                 <thead>
                     <tr>
                         <th>Name</th>
-			            <th>Image</th>
-                        <th>Marks of Excellence</th>
+                        <th>Image</th>
                         <th>MOE 1</th>
                         <th>MOE 2</th>
                         <th>MOE 3</th>
@@ -43,50 +39,58 @@
                 </thead>
                 <tbody>
                     {% for tank in tanks_by_nation[nation] %}
-                    <tr>
+                    <tr class="tank-row">
                         <td>
                             <a href="{{ url_for('show_tank', tank_id=tank.id) }}">{{ tank.name }}</a>
                         </td>
-			<td>
- {% set sanitized_name = tank.name | replace('/', '_') | replace('*', '_') | replace(':', '_') | replace('<', '_') | replace('>', '_') | replace('"', '_') | replace('|', '_') | replace('?', '_') | replace('\\', '_') %}
-        {% if tank.name == 'Chi-Ha' and tank.nation == 'China' %}
-            {% set tank_image_path = 'images/tank/Chi_Ha.png' %}
-        {% elif tank.name == 'IS-2' and tank.nation == 'China' %}
-            {% set tank_image_path = 'images/tank/IS_2.png' %}
-        {% else %}
-            {% set tank_image_path = 'images/tank/' ~ sanitized_name ~ '.png' %}
-        {% endif %}
-        <img src="{{ url_for('static', filename=tank_image_path) }}"
-             alt="{{ tank.name }} Image"
-             onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/tank/default.png') }}';">
-			</td>
+
                         <td>
-                            {% if tank.tier > 4 %}
-                                {% if tank.moe > 0 %}
-                                    {% set moe_image_path = 'images/moes/' ~ tank.nation_code|lower ~ '_' ~ tank.moe ~ '_mark.webp' %}
-                                    <img src="{{ url_for('static', filename=moe_image_path) }}" 
-                                    alt="{{ tank.moe }} Mark(s) of Excellence for {{ tank.nation }}" 
-                                    class="moeindex">
-                                {% else %}
-                                    No Marks of Excellence
+                                <img src="{{ tank.api_image }}" 
+                                    alt="ERROR"
+                                    data-tank="{{ tank.name}}"
+                                    data-type="image"
+                                    onerror="flagError(this)">
+                        </td>
+                        
+                        <td>
+                            {% if tank.tier > 4 and tank.moe > 0 %}
+                                {% set sanitized_name = tank.name | replace('/', '_') | replace('*', '_') | replace(':', '_') | replace('<', '_') | replace('>', '_') | replace('"', '_') | replace('|', '_') | replace('?', '_') | replace('\\', '_') %}
+                                {% if tank.name == 'Chi-Ha' and tank.nation == 'China' %}
+                                    {% set tank_image_path = 'images/tank/Chi_Ha.png' %}
+                                {% elif tank.name == 'IS-2' and tank.nation == 'China' %}
+                                    {% set tank_image_path = 'images/tank/IS_2.png' %}
                                 {% endif %}
-                            {% else %}
-                                Unavailable
+
+                                {% set moe_path = 'images/moe/tier ' ~ tank.tier ~ '/' ~ sanitized_name ~ ' moe n°1.jpg' %}
+                                <img src="{{ url_for('static', filename=moe_path) }}"
+                                 alt="ERROR"
+                                data-tank="{{ tank.name }}"
+                                data-type="moe1"
+                                onerror="flagError(this)">
                             {% endif %}
                         </td>
+
                         <td>
-                            {% set moe_path = 'images/moe/'~ tank.tier ~ '/' ~ sanitized_name ~ ' moe n°1.png' %}
-                            <img src="{{ url_for('static', filename=moe_path)}}" alt="">
-                        </td>
-                        <td>
-                            {% set moe_path = 'images/moe/'~ tank.tier ~ '/' ~ sanitized_name ~ ' moe n°2.png' %}
-                            <img src="{{ url_for('static', filename=moe_path)}}" alt="">
-                        </td>
-                        <td>
-                            {% set moe_path = 'images/moe/'~ tank.tier ~ '/' ~ sanitized_name ~ ' moe n°3.png' %}
-                            <img src="{{ url_for('static', filename=moe_path)}}" alt="">
+                            {% if tank.tier > 4 and tank.moe > 1 %}
+                                {% set moe_path = 'images/moe/tier ' ~ tank.tier ~ '/' ~ sanitized_name ~ ' moe n°2.jpg' %}
+                                <img src="{{ url_for('static', filename=moe_path) }}"
+                                 alt="ERROR"
+                                data-tank="{{ tank.name }}"
+                                data-type="moe2"
+                                onerror="flagError(this)">
+                            {% endif %}
                         </td>
 
+                        <td>
+                            {% if tank.tier > 4 and tank.moe > 2 %}
+                                {% set moe_path = 'images/moe/tier ' ~ tank.tier ~ '/' ~ sanitized_name ~ ' moe n°3.jpg' %}
+                                <img src="{{ url_for('static', filename=moe_path) }}"
+                                 alt="ERROR"
+                                data-tank="{{ tank.name }}"
+                                data-type="moe3"
+                                onerror="flagError(this)">
+                            {% endif %}
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -98,64 +102,95 @@
 </div>
 
 <script>
-    function filterTanks() {
-        // Récupère la valeur de recherche et ignore les espaces
-        let input = document.getElementById('searchInput').value.toLowerCase().replace(/\s+/g, '');
+    const ignoredImages = {};
 
-        // Fonction de correspondance flexible (recherche approximative)
-        function fuzzyMatch(str, pattern) {
-            // Élimine les espaces et compare les lettres du pattern avec celles du str
-            let strCleaned = str.replace(/\s+/g, '').toLowerCase();
-            let patternIndex = 0;
-            for (let i = 0; i < strCleaned.length; i++) {
-                if (strCleaned[i] === pattern[patternIndex]) {
-                    patternIndex++;
-                }
-                if (patternIndex === pattern.length) {
-                    return true;
-                }
+    fetch("/static/config/ignored_images.json")
+        .then(res => res.json())
+        .then(data => {
+            Object.assign(ignoredImages, data);
+            recheckImageErrors();
+        });
+
+    function updateTablesVisibility() {
+        document.querySelectorAll("table").forEach(table => {
+            const hasVisibleRow = [...table.querySelectorAll("tbody tr")]
+                .some(r => r.style.display !== "none");
+
+            let header = table.previousElementSibling;
+            while (header && header.tagName.toLowerCase() !== "h2") {
+                header = header.previousElementSibling;
             }
-            return false;
+
+            table.style.display = hasVisibleRow ? "" : "none";
+            if (header) header.style.display = hasVisibleRow ? "" : "none";
+        });
+    }
+
+    function fuzzyMatch(str, pattern) {
+        let s = str.replace(/\s+/g, '').toLowerCase();
+        let p = pattern.replace(/\s+/g, '').toLowerCase();
+        let i = 0;
+
+        for (let c of s) {
+            if (c === p[i]) i++;
+            if (i === p.length) return true;
         }
+        return false;
+    }
 
-        // Récupère tous les tableaux de tanks
-        let tables = document.querySelectorAll('table');
+    function flagError(img) {
+        const row = img.closest("tr");
+        const tank = img.dataset.tank;
+        const type = img.dataset.type;
 
-        // Parcourt chaque tableau
-        tables.forEach(table => {
-            let rows = table.querySelectorAll('tbody tr');
-            let hasVisibleRow = false; // Suivi des lignes visibles pour chaque tableau
+        if (ignoredImages[tank]?.includes(type)) return;
 
-            // Parcourt chaque ligne de chaque tableau
-            rows.forEach(row => {
-                let nameCell = row.getElementsByTagName('td')[0];
+        img.classList.add("img-error");
+        row.classList.add("errorRow");
+        filterErrorRows();
+    }
 
-                // Vérifie si la ligne correspond à la recherche avec correspondance flexible
-                if (nameCell) {
-                    let txtValue = nameCell.textContent || nameCell.innerText;
-                    if (fuzzyMatch(txtValue, input)) {
-                        row.style.display = ""; // Affiche la ligne
-                        hasVisibleRow = true;  // Il y a au moins une ligne visible
-                    } else {
-                        row.style.display = "none"; // Cache la ligne
-                    }
-                }
-            });
+    function recheckImageErrors() {
+        document.querySelectorAll("img.img-error").forEach(img => {
+            const row = img.closest("tr");
+            const tank = img.dataset.tank;
+            const type = img.dataset.type;
 
-            // Si aucune ligne n'est visible, cache le tableau et son titre de nation
-            let nationHeader = table.previousElementSibling; // Le titre de la nation juste avant le tableau
-            if (hasVisibleRow) {
-                table.style.display = ""; // Affiche le tableau
-                if (nationHeader.tagName.toLowerCase() === 'h2') {
-                    nationHeader.style.display = ""; // Affiche le titre de la nation
-                }
-            } else {
-                table.style.display = "none"; // Cache le tableau
-                if (nationHeader.tagName.toLowerCase() === 'h2') {
-                    nationHeader.style.display = "none"; // Cache le titre de la nation
+            if (ignoredImages[tank]?.includes(type)) {
+                img.classList.remove("img-error");
+
+                if (![...row.querySelectorAll("img.img-error")].length) {
+                    row.classList.remove("errorRow");
+                    row.style.display = "none";
                 }
             }
         });
+
+        updateTablesVisibility();
+    }
+
+    function filterErrorRows() {
+        document.querySelectorAll(".tank-row").forEach(row => {
+            row.style.display = row.classList.contains("errorRow") ? "" : "none";
+        });
+
+        updateTablesVisibility();
+    }
+
+    function filterTanks() {
+        const input = document.getElementById("searchInput").value;
+
+        document.querySelectorAll(".tank-row").forEach(row => {
+            if (!row.classList.contains("errorRow")) {
+                row.style.display = "none";
+                return;
+            }
+
+            const name = row.querySelector("td").innerText;
+            row.style.display = fuzzyMatch(name, input) ? "" : "none";
+        });
+
+        updateTablesVisibility();
     }
 </script>
 
