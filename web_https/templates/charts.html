@@ -1,0 +1,131 @@
+{% include 'includes/header.html' %}
+<title>Charts</title>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+<header>
+    <h1>MoEs & Aces Charts</h1>
+</header>
+
+<div style="display: flex;">
+    <main style="flex-grow: 1; padding: 10px;">
+        <h2 class="text-center">Number of MOEs per class</h2>
+        <div id="bar-chart">{{ bar_chart_div|safe }}</div>
+
+        <h2 class="text-center">MOEs Progression</h2>
+        <div id="stacked-chart">{{ stacked_chart_div|safe }}</div>
+
+        <h2 class="text-center">MOEs per Class</h2>
+        <table>
+            <tr>
+                <th>Class</th>
+                <th>Total Tanks</th>
+                <th>3e MOE Count</th>
+                <th>% Completion</th>
+            </tr>
+            {% for row in class_completion %}
+            <tr>
+                <td>{{ row.class }}</td>
+                <td>{{ row.total_tanks }}</td>
+                <td>{{ row.moe_3_count }}</td>
+                <td>{{ '%.2f' % row.completion_rate }}%</td>
+            </tr>
+            {% endfor %}
+            <tr>
+                <td><strong>Total</strong></td>
+                <td><strong>{{ total_class_tanks }}</strong></td>
+                <td><strong>{{ total_class_moe_3 }}</strong></td>
+                <td>
+                    <strong>
+                        {{ '%.2f' % ((total_class_moe_3 / total_class_tanks) * 100) if total_class_tanks > 0 else 0 }}%
+                    </strong>
+                </td>
+            </tr>
+        </table>
+
+        <h2 class="text-center">MOEs per Tier</h2>
+        <table>
+            <tr>
+                <th>Tier</th>
+                <th>Total Tanks</th>
+                <th>3e MOE Count</th>
+                <th>% Completion</th>
+            </tr>
+            {% for row in tier_completion %}
+            <tr>
+                <td>{{ row.tier }}</td>
+                <td>{{ row.total_tanks }}</td>
+                <td>{{ row.moe_3_count }}</td>
+                <td>{{ '%.2f' % row.completion_rate }}%</td>
+            </tr>
+            {% endfor %}
+            <tr>
+                <td><strong>Total</strong></td>
+                <td><strong>{{ total_tier_tanks }}</strong></td>
+                <td><strong>{{ total_tier_moe_3 }}</strong></td>
+                <td>
+                    <strong>
+                        {{ '%.2f' % ((total_tier_moe_3 / total_tier_tanks) * 100) if total_tier_tanks > 0 else 0 }}%
+                    </strong>
+                </td>
+            </tr>
+        </table>
+
+        <h2 class="text-center">Aces per Class</h2>
+        <table>
+            <tr>
+                <th>Class</th>
+                <th>Total Tanks</th>
+                <th>Aces</th>
+                <th>% Completion</th>
+            </tr>
+            {% for row in aces_class_completion %}
+            <tr>
+                <td>{{ row.class }}</td>
+                <td>{{ row.total_tanks }}</td>
+                <td>{{ row.aces_count }}</td>
+                <td>{{ '%.2f' % row.completion_rate }}%</td>
+            </tr>
+            {% endfor %}
+            <tr>
+                <td><strong>Total</strong></td>
+                <td><strong>{{ total_aces_class_tanks }}</strong></td>
+                <td><strong>{{ total_aces_class }}</strong></td>
+                <td>
+                    <strong>
+                        {{ '%.2f' % ((total_aces_class / total_aces_class_tanks) * 100) if total_aces_class_tanks else 0 }}%
+                    </strong>
+                </td>
+            </tr>
+        </table>
+
+        <h2 class="text-center">Aces per Tier</h2>
+        <table>
+            <tr>
+                <th>Tier</th>
+                <th>Total Tanks</th>
+                <th>Aces</th>
+                <th>% Completion</th>
+            </tr>
+            {% for row in aces_tier_completion %}
+            <tr>
+                <td>{{ row.tier }}</td>
+                <td>{{ row.total_tanks }}</td>
+                <td>{{ row.aces_count }}</td>
+                <td>{{ '%.2f' % row.completion_rate }}%</td>
+            </tr>
+            {% endfor %}
+            <tr>
+                <td><strong>Total</strong></td>
+                <td><strong>{{ total_aces_tier_tanks }}</strong></td>
+                <td><strong>{{ total_aces_tier }}</strong></td>
+                <td>
+                    <strong>
+                        {{ '%.2f' % ((total_aces_tier / total_aces_tier_tanks) * 100) if total_aces_tier_tanks else 0 }}%
+                    </strong>
+                </td>
+            </tr>
+        </table>
+    </main>
+</div>
+
+{% include 'includes/footer.html' %}
