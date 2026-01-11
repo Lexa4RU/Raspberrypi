@@ -8,21 +8,22 @@
 <main>
 <div class="tank-container">
     <div class="tank-info">
+        <p><strong>WG id :</strong> {{ tank.wg_id }}</p>
         <p><strong>Nation :</strong> {{ tank.nation }}</p>
         <p><strong>Class :</strong> {{ tank.class }}</p>
         <p><strong>Tier :</strong> {{ tank.tier }}</p>
         <p><strong>Type :</strong> {{ tank.type }}</p>
         <p><strong>Mastery Badge :</strong>
             {% if tank.mastery == 4 %}
-                <img src="{{ url_for('static', filename='images/4.webp') }}" alt="Ace Mastery Badge" class="mastery">
+                <img src="{{ url_for('static', filename='images/mastery/4.webp') }}" alt="Ace Mastery Badge" class="mastery">
             {% elif tank.mastery == 3 %}
-                <img src="{{ url_for('static', filename='images/3.webp') }}" alt="1st Class Mastery Badge" class="mastery">
+                <img src="{{ url_for('static', filename='images/mastery/3.webp') }}" alt="1st Class Mastery Badge" class="mastery">
             {% elif tank.mastery == 2 %}
-                <img src="{{ url_for('static', filename='images/2.webp') }}" alt="2nd Class Mastery Badge" class="mastery">
+                <img src="{{ url_for('static', filename='images/mastery/2.webp') }}" alt="2nd Class Mastery Badge" class="mastery">
             {% elif tank.mastery == 1 %}
-                <img src="{{ url_for('static', filename='images/1.webp') }}" alt="3rd Class Mastery Badge" class="mastery">
+                <img src="{{ url_for('static', filename='images/mastery/1.webp') }}" alt="3rd Class Mastery Badge" class="mastery">
             {% else %}
-                <img src="{{ url_for('static', filename='images/0.webp') }}" alt="No Mastery Badge" class="mastery">
+                <img src="{{ url_for('static', filename='images/mastery/0.webp') }}" alt="No Mastery Badge" class="mastery">
             {% endif %}
         </p>
         {% if tank.tier > 4 and tank.moe > 0 %}
@@ -35,19 +36,11 @@
         </p>
     </div>
     <div class="tank-image">
-        {% set sanitized_name = tank.name | replace('/', '_') | replace('*', '_') | replace(':', '_') | replace('<', '_') | replace('>', '_') | replace('"', '_') | replace('|', '_') | replace('?', '_') | replace('\\', '_') %}
-        {% if tank.name == 'Chi-Ha' and tank.nation == 'China' %}
-            {% set tank_image_path = 'images/tank/Chi_Ha.png' %}
-        {% elif tank.name == 'IS-2' and tank.nation == 'China' %}
-            {% set tank_image_path = 'images/tank/IS_2.png' %}
-        {% else %}
-            {% set tank_image_path = 'images/tank/' ~ sanitized_name ~ '.png' %}
-        {% endif %}
-        <img src="{{ url_for('static', filename=tank_image_path) }}" 
-             alt="{{ tank.name }} Image" 
-             onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/tank/default.png') }}';">
-    </div>
-    
+    {# Use the API image if found, otherwise fall back to your local default #}
+    <img src="{{ tank.api_image if tank.api_image else url_for('static', filename='images/default.png') }}" 
+         alt="{{ tank.name }} Image"
+         onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/default.png') }}';">
+</div>
 </div>
     {% if tank.tier > 4 and tank.moe > 0 %}
     <p>
@@ -62,7 +55,7 @@
                     <td>{{ moes[1] }}</td>
                 </tr>
                 <tr>
-                    {% set moe_path = 'images/moe/'~ tank.tier ~ '/' ~ sanitized_name ~ ' moe n°1.png' %}
+                    {% set moe_path = 'images/moe/tier '~ tank.tier ~ '/' ~ sanitized_name ~ ' moe n°1.jpg' %}
                     <td><img src="{{ url_for('static', filename=moe_path) }}"  alt="{{ tank.name }} moe n°1 Image" td>
                 </tr>
             </tbody>
@@ -79,7 +72,7 @@
                     <td>{{ moes[2] }}</td>
                 </tr>
                 <tr>
-                    {% set moe_path = 'images/moe/'~ tank.tier ~ '/' ~ sanitized_name ~ ' moe n°2.png' %}
+                    {% set moe_path = 'images/moe/tier '~ tank.tier ~ '/' ~ sanitized_name ~ ' moe n°2.jpg' %}
                     <td><img src="{{ url_for('static', filename=moe_path) }}"  alt="{{ tank.name }} moe n°2 Image"></td>
                 </tr>
             </tbody>
@@ -97,7 +90,7 @@
                     <td>{{ moes[3] }}</td>
                 </tr>
                 <tr>
-                    {% set moe_path = 'images/moe/'~ tank.tier ~ '/' ~ sanitized_name ~ ' moe n°3.png' %}
+                    {% set moe_path = 'images/moe/tier '~ tank.tier ~ '/' ~ sanitized_name ~ ' moe n°3.jpg' %}
                     <td><img src="{{ url_for('static', filename=moe_path) }}"  alt="{{ tank.name }} moe n°3 Image"></td>
                 </tr>
             </tbody>
@@ -105,10 +98,11 @@
         {% endif %}
     </p>
     {% endif %}
-
-    <button type="button" class="btn btn-primary" onclick="window.location.href='{{ url_for('edit_tank', tank_id=tank.id) }}'">Edit</button>
-
-    <button type="button" class="btn btn-primary" onclick="window.location.href='{{ url_for('index') }}'">Back to the list</button>
+        
+    {% if is_logged_in %}                        
+        <button type="button" class="btn btn-primary" onclick="window.location.href='{{ url_for('edit_tank', tank_id=tank.id) }}'">Edit</button>
+    {% endif %}
+    <button type="button" class="btn btn-primary" onclick="window.location.href='{{ url_for('data_tracker') }}'">Back to the list</button>
 </main>
 
 {% include 'includes/footer.html' %}
