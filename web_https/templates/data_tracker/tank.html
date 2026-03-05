@@ -41,6 +41,12 @@
 </div>
 </div>
     {% if tank.tier > 4 and tank.moe > 0 %}
+        {% set sanitized_name = tank.name | replace('/', '_') | replace('*', '_') | replace(':', '_') | replace('<', '_') | replace('>', '_') | replace('"', '_') | replace('|', '_') | replace('?', '_') | replace('\\', '_') %}
+        {% if tank.name == 'Chi-Ha' and tank.nation == 'China' %}
+            {% set tank_image_path = 'images/tank/Chi_Ha.png' %}
+        {% elif tank.name == 'IS-2' and tank.nation == 'China' %}
+            {% set tank_image_path = 'images/tank/IS_2.png' %}
+        {% endif %}
     <p>
         <table class="justify-content-center" border="1">
             <thead>

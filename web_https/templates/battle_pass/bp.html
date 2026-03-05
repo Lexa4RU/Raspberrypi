@@ -1,0 +1,139 @@
+{% include 'includes/bp_header.html' %}
+<title>{{ bp.name }}</title>
+
+<header>
+    <h1>{{ bp.name }}</h1>
+</header>
+
+<main style="padding: 20px;">
+    <section>
+        <h2 class="text-center">General information</h2>
+        <ul>
+            <li><strong>Start date:</strong> {{ bp.start_date.strftime('%d/%m/%Y') }}</li>
+            <li><strong>End date:</strong> {{ bp.end_date.strftime('%d/%m/%Y') }}</li>
+            <li><strong>Total duration:</strong> {{ total_days }} days</li>
+            <li><strong>Total points:</strong> {{ total_points }}</li>
+            <li><strong>Points per day:</strong> {{ points_per_day }}</li>
+            {% if bp.article_link %}
+                <li>
+                    <strong><a href="{{ bp.article_link }}" target="_blank">Official article</a></strong>
+                </li>
+            {% endif %}
+        </ul>
+    </section>
+
+    {% if tanks %}
+    <section>
+        <h2 class="text-center">Highlighted tanks</h2>
+
+            <table border="1" style="margin: auto; text-align: center;">
+                <tr>
+                    {% for tank in tanks %}
+                        <th>{{ tank.name }}</th>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    {% for tank in tanks %}
+                    <td>
+                        {% set icon = get_wg_tank_image_cached(tank.wg_id) %}
+                        {% if icon %}
+                            <img src="{{ icon }}" alt="{{ tank.name }}" width="80">
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+            </table>     
+    </section>
+    {% endif %}
+
+    <section>
+        <h2 class="text-center">Rewards</h2>
+        <h3 class="text-center">Base rewards</h3>
+        <table border="1" width="100%">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Quantity</th>
+                    <th>Gold price</th>
+                    <th>€ price</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for obj in objects if obj.reward == 0 %}
+                <tr>
+                    <td>{{ obj.name }}</td>
+                    <td style="text-align: center;">{{ obj.quantity }}</td>
+                    <td style="text-align: right;">
+                        {% if obj.gold_price is not none %}
+                            {{ ('%f' % obj.gold_price).rstrip('0').rstrip('.') }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td style="text-align: right;">
+                        {% if obj.eur_price is not none %}
+                            {{ obj.eur_price }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th colspan="2">Total</th>
+                    <th style="text-align:right">{{ total_base_gold|round(2) }}</th>
+                    <th style="text-align:right">{{ total_base_eur }}</th>
+                </tr>
+            </tfoot>
+        </table>
+        <h3 class="text-center">Improved rewards</h3>
+        <table border="1" width="100%">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Quantity</th>
+                    <th>Gold price</th>
+                    <th>€ price</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for obj in objects if obj.reward == 1 %}
+                <tr>
+                    <td>{{ obj.name }}</td>
+                    <td style="text-align: center;">{{ obj.quantity }}</td>
+                    <td style="text-align: right;">
+                        {% if obj.gold_price is not none %}
+                            {{ ('%f' % obj.gold_price).rstrip('0').rstrip('.') }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td style="text-align: right;">
+                        {% if obj.eur_price is not none %}
+                            {{ obj.eur_price }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th colspan="2">Total</th>
+                    <th style="text-align:right">{{ total_improved_gold|round(2) }}</th>
+                    <th style="text-align:right">{{ total_improved_eur }}</th>
+                </tr>
+            </tfoot>
+        </table>
+        {% if is_logged_in %}                        
+            <button type="button" class="btn btn-primary" onclick="window.location.href='{{ url_for('edit_battle_pass', slug=bp.slug) }}'">Edit</button>
+        {% endif %}        
+    </section>
+</main>
+
+{% include 'includes/footer.html' %}

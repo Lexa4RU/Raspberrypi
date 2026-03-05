@@ -1,0 +1,39 @@
+{% include 'includes/bp_header.html' %}
+<title>Edit Battle Pass Data</title>
+
+<header>
+    <h1>{{ data.name }}</h1>
+</header>
+
+<section class="py-5">
+    <div class="container px-4 px-lg-5 mt-5">
+        <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-4 justify-content-center">
+            <form method="post">
+                <label for="category">Category:</label>
+                <select id="category" name="category" required>
+                    <option value="Crew" {% if data.categorys == 'Crew' %}selected{% endif %}>Crew</option>
+                    <option value="Currency" {% if data.category == 'Currency' %}selected{% endif %}>Currency</option>
+                    <option value="Equipment" {% if data.category == 'Equipment' %}selected{% endif %}>Equipment</option>
+                    <option value="Exterior" {% if data.category == 'Exterior' %}selected{% endif %}>Exterior</option>
+                    <option value="Fragments" {% if data.category == 'Fragments' %}selected{% endif %}>Fragments</option>
+                    <option value="Miscellaneous" {% if data.category == 'Miscellaneous' %}selected{% endif %}>Miscellaneous</option>
+                    <option value="Reserve" {% if data.category == 'Reserve' %}selected{% endif %}>Reserve</option>
+                </select>
+                <br><br>
+
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" value="{{ data.name }}" required>
+                <br><br>
+
+                <label for="gold_price">Gold price:</label>
+                <input type="number" step="0.000001" id="gold_price" name="gold_price" value="{{ data.gold_price }}">
+                <br><br>
+
+                <button type="submit" class="btn btn-primary">Save</button>
+                <button type="button" class="btn btn-primary" onclick="window.location.href='{{ url_for('bp_data_list') }}'">Cancel</button>
+            </form>
+        </div>
+    </div>
+</section>
+
+{% include 'includes/footer.html' %}

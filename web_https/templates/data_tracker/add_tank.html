@@ -1,0 +1,50 @@
+{% include 'includes/header.html' %}
+<title>Add a tank</title>
+
+<header>
+    <h1>Add a Tank</h1>
+</header>
+
+<div style="display: flex;">
+    <main style="flex-grow: 1; padding: 10px;">
+        <form method="post">
+            <table class="justify-content-center" border="1">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>Icon</th>
+                        <th>Name</th>
+                        <th>Tier</th>
+                        <th>Class</th>
+                        <th>Type</th>
+                        <th>Nation</th>
+                        <th>WG_id</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tank in tanks %}
+                    <tr>
+                        <td>    
+                            <input type="checkbox" name="tank_ids" value="{{ tank.wg_id }}">
+                        </td>
+                        <td>
+                            <img src="{{ tank.icon }}" width="80">
+                        </td>
+                        <td>{{ tank.name }}</td>
+                        <td>{{ tank.tier }}</td>
+                        <td>{{ tank.class }}</td>
+                        <td>{{ tank.type }}</td>
+                        <td>{{ tank.nation_code }}</td>
+                        <td>{{ tank.wg_id }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <button class="btn btn-primary">Add selected tanks</button>
+        </form>
+    </main>
+</div>
+
+
+{% include 'includes/footer.html' %}

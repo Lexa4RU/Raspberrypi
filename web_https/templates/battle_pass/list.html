@@ -1,0 +1,42 @@
+{% include 'includes/bp_header.html' %}
+<title>Battle Pass</title>
+
+<header>
+    <h1>Battle Pass</h1>
+</header>
+
+<main style="padding: 20px;">
+    <table border="1" width="100%">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Dates</th>
+                <th>Highlighted Tanks</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for bp in battle_passes %}
+            <tr>
+                <td>
+                    <a href="{{ url_for('battle_pass_detail', slug=bp.slug) }}">
+                        {{ bp.name }}
+                    </a>
+                </td>
+                <td>
+                    {{ bp.start_date.strftime('%d/%m/%Y') }} →
+                    {{ bp.end_date.strftime('%d/%m/%Y') }}
+                </td>
+                <td>
+                    {% if bp.tank_names %}
+                        {{ bp.tank_names }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</main>
+
+{% include 'includes/footer.html' %}

@@ -1,0 +1,91 @@
+{% include 'includes/bp_header.html' %}
+<title>Add Battle Pass</title>
+
+<header>
+    <h1>Add a Battle Pass</h1>
+</header>
+
+<main style="padding: 20px;">
+    <section>
+        <form method="post">
+            <label for="name">Name:</label>
+            <input type="text" name="name" id="name" required><br><br>
+
+            <label>Start Date:</label>
+            <input type="date" name="start_date" required><br><br>
+
+            <label>End Date:</label>
+            <input type="date" name="end_date" required><br><br>
+
+            <label>Chapters:</label>
+            <input type="number" name="chapters" required><br><br>
+
+            <label>Stages per Chapter:</label>
+            <input type="number" name="stages_per_chapter" required><br><br>
+
+            <label>Points per Stage:</label>
+            <input type="number" name="points_per_stage" required><br><br>
+
+            <label>Article Link:</label>
+            <input type="text" name="article_link"><br><br>
+
+            <label>Highlighted tanks</label><br>
+            <select name="tanks" multiple size="8">
+            {% for tank in tanks %}
+                <option value="{{ tank.wg_id }}">
+                    {{ tank.name }} ({{ tank.wg_id }})
+                </option>
+            {% endfor %}
+            </select>
+
+            <h2 class="text-center">Base Rewards</h2>
+                {% for category, items in bp_data|groupby('category') %}
+                    <h3 class="text-center">{{ category }}</h3>
+
+                    <table border="1" width="100%">
+                    <tr>
+                        <th>Object</th>
+                        <th>Base</th>
+                    </tr>
+                    {% for item in items %}
+                    <tr>
+                        <td>{{ item.name }}</td>
+                        <td>
+                            <input type="number" min="0"
+                            name="base_{{ item.id }}"
+                            value="{{ existing.get((item.id,0),0) if existing else 0 }}">
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    </table>
+                {% endfor %}
+
+            <h2 class="text-center">Improved Rewards</h2>
+                {% for category, items in bp_data|groupby('category') %}
+                    <h3 class="text-center">{{ category }}</h3>
+
+                    <table border="1" width="100%">
+                    <tr>
+                        <th>Object</th>
+                        <th>Base</th>
+                    </tr>
+                    {% for item in items %}
+                    <tr>
+                        <td>{{ item.name }}</td>
+                        <td>
+                            <input type="number" min="0"
+                            name="base_{{ item.id }}"
+                            value="{{ existing.get((item.id,0),0) if existing else 0 }}">
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    </table>
+                {% endfor %}
+
+            <br>
+            <button type="submit" class="btn btn-primary">Create Battle Pass</button>
+        </form>
+    </section>
+</main>
+
+{% include 'includes/footer.html' %}

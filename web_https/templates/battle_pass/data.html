@@ -1,0 +1,57 @@
+{% include 'includes/bp_header.html' %}
+<title>Battle Pass Data</title>
+
+<header>
+    <h1>Battle Pass Objects</h1>
+</header>
+
+<main style="padding: 20px;">
+    {% for category, items in data_by_category.items() %}
+        <h2 class="text-center">{{ category }}</h2>
+        <table border="1" width="100%">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Gold price</th>
+                    <th>€ price</th>
+                    {% if is_logged_in %}
+                        <th>Actions</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in items %}
+                <tr>
+                    <td>{{ d.name }}</td>
+                    <td style="text-align: right;">
+                        {% if d.gold_price is not none %}
+                            {{ ('%f' % d.gold_price).rstrip('0').rstrip('.') }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td style="text-align: right;">
+                        {% if d.eur_price is not none %}
+                            {{ d.eur_price }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    {% if is_logged_in %}
+                    <td>
+                        <a href="{{ url_for('edit_bp_data', data_id=d.id) }}">Edit</a>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <br>
+    {% endfor %}
+
+    {% if is_logged_in %}                        
+        <button type="button" class="btn btn-primary" onclick="window.location.href='{{ url_for('add_bp_data') }}'">Add new object</button>
+    {% endif %}
+</main>
+
+{% include 'includes/footer.html' %}
