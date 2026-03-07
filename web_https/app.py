@@ -208,7 +208,6 @@ def get_wg_tank_contour_icon_cached(wg_id):
 
     return contour_icon
 
-
 app.jinja_env.globals.update(
     get_wg_tank_contour_icon_cached=get_wg_tank_contour_icon_cached,
     get_wg_tank_image_cached=get_wg_tank_image_cached
@@ -392,10 +391,10 @@ def add_tank():
 
     try:
         wg_tanks = get_all_wg_tanks_cached()
-    except Exception as e:
+    except Exception:
         cursor.close()
         conn.close()
-        return f"WG API Error: {e}", 500
+        return f"WG API Error", 500
 
     tanks_to_display = []
 
