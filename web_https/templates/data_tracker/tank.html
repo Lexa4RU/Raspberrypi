@@ -35,11 +35,24 @@
         </p>
     </div>
     <div class="tank-image">
-    <img src="{{ tank.api_image if tank.api_image else url_for('static', filename='images/default.png') }}" 
-         alt="{{ tank.name }} Image"
-         onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/default.png') }}';">
+        <img src="{{ tank.api_image if tank.api_image else url_for('static', filename='images/default.png') }}" 
+        alt="{{ tank.name }} Image">
+    </div>
 </div>
-</div>
+<style>
+  .description-text {
+    max-width: 800px;
+    margin: 30px auto;
+    text-align: justify;
+    line-height: 1.6;  
+    padding: 0 15px;
+  }
+</style>
+<p class="description-text">
+    {{ tank.txt }}
+</p>
+    
+
     {% if tank.tier > 4 and tank.moe > 0 %}
         {% set sanitized_name = tank.name | replace('/', '_') | replace('*', '_') | replace(':', '_') | replace('<', '_') | replace('>', '_') | replace('"', '_') | replace('|', '_') | replace('?', '_') | replace('\\', '_') %}
         {% if tank.name == 'Chi-Ha' and tank.nation == 'China' %}

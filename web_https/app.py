@@ -655,12 +655,13 @@ def edit_tank(tank_id):
             tier = int(request.form['tier'])
             tank_type = request.form['type']
             ace = request.form['mastery']
+            txt = request.form['txt']
 
             cursor.execute("""
                 UPDATE tanks 
-                SET name = %s, full_name = %s, class = %s, tier = %s, type = %s, mastery = %s
+                SET name = %s, full_name = %s, class = %s, tier = %s, type = %s, mastery = %s, txt = %s
                 WHERE id = %s
-            """, (name, full_name, tank_class, tier, tank_type, ace, tank_id))
+            """, (name, full_name, tank_class, tier, tank_type, ace, txt, tank_id))
             conn.commit()
             cursor.close()
             conn.close()
